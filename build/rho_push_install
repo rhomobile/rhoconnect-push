@@ -1,0 +1,77 @@
+#!/bin/bash
+NODE_VERSION=v0.10.22
+NODE_URL=http://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}.tar.gz
+
+PREFIX=/opt/rhoconnect
+mkdir -p "${PREFIX}/logs/"
+
+TIMESTAMP=`date +%Y%m%d%H%M%S`
+log_name=rhoconnect_push_$(date +$TIMESTAMP).log
+log_file="${PREFIX}/logs/${log_name}"
+touch $log_file > /dev/null
+
+echo "Starting rhoconnect-push installer ..."  | tee -a $log_file
+
+cd /opt/rhoconnect/installer
+wget ${NODE_URL} -O node-${NODE_VERSION}.tar.gz
+tar -xzf node-${NODE_VERSION}.tar.gz
+cd node-${NODE_VERSION}/
+
+echo "Building nodejs ..."  | tee -a $log_file
+
+# Cent OS/RHEL 5 requires python 2.6
+export PYTHON=`which python26 2> /dev/null`
+$PYTHON ./configure --prefix=$PREFIX  >> $log_file 2>&1
+make
+make install >> $log_file 2>&1
+if [[ $? != 0 ]]; then
+  echo "Installation of nodejs failed. For troubleshooting see file $log_file ..." | tee -a $log_file
+  exit
+fi
+
+echo "Nodejs is successfully installed"  | tee -a $log_file
+cd ../
+
+echo "Installing rhoconnect-push ..." | tee -a $log_file
+
+export PATH=$PREFIX/bin/:$PATH
+TARBALL=`ls rhoconnect-push-*.tgz`
+npm install -g $TARBALL  >> $log_file 2>&1
+if [[ $? != 0 ]]; then
+  echo "Installation of rhoconnect-push failed. For troubleshooting see file $log_file ..." | tee -a $log_file
+else
+  mkdir -p "${PREFIX}/etc/"
+  ln -s ${PREFIX}/lib/node_modules/rhoconnect-push/config.json ${PREFIX}/etc/.
+
+  echo "Rhoconnect-push is successfully installed"  | tee -a $log_file
+  echo "You may want to put the node and rhoconnect-push executables in your path as well for easier use:" | tee -a $log_file
+  echo "  export PATH=${PREFIX}/bin:"'$PATH' | tee -a $log_file
+  echo "To use rhoconnect-push service start a redis server, and then run the following command:" | tee -a $log_file
+  if [ -d /etc/init/ ]; then
+    cp rhoconnect-push.conf /etc/init/
+
+    echo "  sudo start rhoconnect-push" | tee -a $log_file
+  else
+	USER="nodejs"
+	HOME="/var/lib/nodejs"
+	# Creating group if it isn't already there
+	if ! getent group $USER >/dev/null
+	then
+	    groupadd -r $USER >/dev/null
+	fi
+	# Creating user if it isn't already there
+	if ! getent passwd $USER >/dev/null
+	then
+	    /usr/sbin/useradd -m -r -s /bin/bash -d $HOME -g $USER $USER
+	fi
+    cp rhoconnect-push /etc/init.d/
+    chmod +x /etc/init.d/rhoconnect-push
+    # Logs go there ...
+	mkdir -p /var/log/rhoconnect-push
+	chown $USER:$USER /var/run/rhoconnect-push
+
+    echo "  /etc/init.d/rhoconnect-push start" | tee -a $log_file
+  fi
+fi
+
+rm -rf /opt/rhoconnect/installer

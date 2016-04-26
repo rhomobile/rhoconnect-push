@@ -1,0 +1,120 @@
+#!/usr/bin/env coffee
+
+OptParse  = require 'optparse'
+Fs        = require 'fs'
+Server	  = require '../vendor/ans2server-min'
+Version   = require('../package').version
+Config    = null
+
+Switches = [
+  ['-c', '--config FILE',                 'Path to configuration (config.json) file'],
+  ['-d', '--debug NUMBER',                'Specify server debug level: 0 (errors) - 3 (everything)'],
+  ['-e', '--rcPort NUMBER',               'Specify RhoConnect instance port'],
+  ['-h', '--help',                        'Print this help message'],
+  ['-i', '--rcHost HOST',                 'Host for the RhoConnect instance'],
+  ['-k', '--keyFile FILE',                'Path to private SSL keyfile (https only)'],
+  ['-p', '--port NUMBER',                 'Run the server on this port (defaults to 8675)'],
+  ['-r', '--redis URL',                   'Redis connection string (i.e. redis://localhost:6379)'],
+  ['-s', '--httpSecure',                  'Specify if this server is running over https or http'],
+  ['-R', '--rcSecure',                    'Specify if the Rhoconnect server is running over https or http'],
+  ['-t', '--timeout NUMBER',              'Time (in ms) before timeout is sent to client'],
+  ['-T', '--registrationTimeout NUMBER',  'Expiration limit for client registration tokens'],
+  ['-v', '--version',                     'Display server version']
+]
+
+# Defaults
+Options =
+  httpSecure:                 'n'
+  rcSecure:                   'n'
+  appAuthHost:                'localhost'
+  appAuthPort:                '9292'
+  appAuthUrl:                 '/rc/v1/system/rps_login'
+  userAuthHost:               'localhost'
+  userAuthPort:               '9292'
+  userAuthUrl:                '/rc/v1/app/rps_login'
+  devAuthHost:                'localhost'
+  devAuthPort:                '9292'
+  devAuthUrl:                 '/rc/v1/app/rps_login'
+  ansResponseTimeout:         '300000'
+  ansServerHost:              'localhost'
+  ansServerPort:              '8675'
+  registrationTimeout:        '2592000'
+  debugLevel:                 '1'
+  numClients:                 '3'
+  clearDataBase:              'n'
+  socketPoolSize:             '5'
+  authCredentialCacheEnabled: 'y'
+  authCredentialCacheSize:    '10'
+  authCredentialLifetime:     '60000'
+  redisToGoUrl:               process.env.REDISTOGO_URL || process.env.REDIS || 'redis://localhost:6379'
+
+# Handle arguments
+Parser = new OptParse.OptionParser Switches
+Parser.banner = 'Usage: rhoconnect-push [options]'
+
+Parser.on 'certificateFile', (opt, value) ->
+  Options.certificateFile = value
+
+Parser.on 'certificateAuthorityFile', (opt, value) ->
+  Options.certificateAuthorityFile = value
+
+Parser.on 'config', (opt, value) ->
+  Options.config = value
+
+Parser.on 'debug', (opt, value) ->  
+  Options.debugLevel = value
+
+Parser.on 'help', (opt, value) ->
+  console.log Parser.toString()
+  process.exit 0
+
+Parser.on 'httpSecure', (opt, value) ->
+  Options.httpSecure = value
+
+Parser.on 'rcSecure', (opt, value) ->
+  Options.rcSecure = value
+
+Parser.on 'keyFile', (opt, value) ->
+  Options.keyFile = value
+
+Parser.on 'port', (opt, value) ->  
+  Options.ansServerPort = value
+
+Parser.on 'rcHost', (opt, value) ->
+  Options.appAuthHost  = value
+  Options.userAuthHost = value
+  Options.devAuthHost  = value
+
+Parser.on 'rcPort', (opt, value) ->
+  Options.appAuthPort  = value
+  Options.userAuthPort = value
+  Options.devAuthPort  = value
+
+Parser.on 'redis', (opt, value) ->
+  Options.redisToGoUrl = value
+
+Parser.on 'registrationTimeout', (opt, value) ->
+  Options.registrationTimeout = value
+
+Parser.on 'timeout', (opt, value) ->
+  Options.ansResponseTimeout = value
+
+Parser.on 'version', (opt, value) ->
+  console.log Version
+  process.exit 0
+
+Parser.parse process.argv
+
+unless process.platform is "win32"
+  process.on 'SIGTERM', ->
+    process.exit 0
+
+# Start the server based on config file or arguments
+if Options.config
+  data = Fs.readFileSync Options.config, 'utf8'
+  Config = JSON.parse data
+else
+  Config = Options
+Server.startServer Config
+
+console.log 'RhoConnect push server started...'

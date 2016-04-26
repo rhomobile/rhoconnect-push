@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd /opt/rhoconnect/bin/
+rm -f node node-waf npm rhoconnect-push
+rm -f /etc/init/rhoconnect-push.conf
+
+cd  /opt/rhoconnect/lib/
+rm -rf node
+rm -rf node_modules
+
+rm -rf /opt/rhoconnect/include/node/
+rm -f /opt/rhoconnect/share/man/man1/node1
+
+rm -f /opt/rhoconnect/etc/config.json

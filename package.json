@@ -1,0 +1,38 @@
+{
+  "name": "rhoconnect-push",
+  "version": "1.2.4",
+  "description": "RhoConnect Push Service",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhomobile/rhoconnect-push.git"
+  },
+  "keywords": "push rhoconnect",
+  "author": "Symbol Technologies",
+  "bin": {
+    "rhoconnect-push": "./bin/rhoconnect-push.js"
+  },
+  "dependencies": {
+    "coffee-script": "",
+    "optparse": "1.0.x",
+    "node-uuid": "1.4.x",
+    "redis": "0.8.x",
+    "redis-url": "0.1.x"
+  },
+  "devDependencies": {
+    "mocha": "",
+    "uglify-js": "",
+    "supertest": "",
+    "superagent": ""
+  },
+  "bundledDependencies": [
+    "coffee-script",
+    "optparse",
+    "node-uuid",
+    "redis",
+    "redis-url"
+  ],
+  "private": true
+}

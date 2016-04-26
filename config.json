@@ -1,0 +1,19 @@
+{
+    "httpSecure": "n",
+    "rcSecure": "n",
+    "devAuthHost": "localhost",
+    "devAuthUrl": "/rc/v1/app/rps_login",
+    "devAuthPort": "9292",
+    "userAuthHost": "localhost",
+    "userAuthUrl": "/rc/v1/app/rps_login",
+    "userAuthPort": "9292",
+    "appAuthHost": "localhost",
+    "appAuthUrl": "/rc/v1/system/rps_login",
+    "appAuthPort": "9292",
+    "ansResponseTimeout": "300000",
+    "ansServerPort": "8675",
+    "registrationTimeout": "2592000",
+    "clearDataBase": "n",
+    "socketPoolSize": 1,
+    "debugLevel": "1"
+}
